@@ -37,24 +37,45 @@ const Index = () => {
     setResult(null);
 
     try {
-      // Simulate analysis delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedImage);
+      
+      await new Promise<void>((resolve, reject) => {
+        reader.onload = async () => {
+          try {
+            const base64Image = reader.result as string;
 
-      // Demo response until backend is connected
-      const mockResult: AnalysisResult = {
-        bias: 'bullish',
-        confidence: 78,
-        reasons: [
-          'Liquidity sweep detected above previous high',
-          '1H fair value gap filled with strong reaction',
-          'Higher-low structure forming at key support level',
-          'Bullish order flow indicates buyer strength'
-        ],
-        best_move: 'Wait for retracement to 1H FVG zone before entering long. Target previous high with stop below structure.'
-      };
+            // Call edge function with proper URL
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-chart`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: base64Image }),
+              }
+            );
 
-      setResult(mockResult);
-      toast.success('Analysis complete!');
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Analysis failed');
+            }
+
+            const data = await response.json();
+            setResult(data);
+            toast.success('Analysis complete!');
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.onerror = () => {
+          reject(new Error('Failed to read image'));
+        };
+      });
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to analyze chart');
