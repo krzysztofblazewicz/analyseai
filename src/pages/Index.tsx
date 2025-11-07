@@ -37,39 +37,24 @@ const Index = () => {
     setResult(null);
 
     try {
-      // Convert image to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedImage);
-      
-      reader.onload = async () => {
-        const base64Image = reader.result as string;
+      // Simulate analysis delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Call edge function
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-chart`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ image: base64Image }),
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Analysis failed');
-        }
-
-        const data = await response.json();
-        setResult(data);
-        toast.success('Analysis complete!');
+      // Demo response until backend is connected
+      const mockResult: AnalysisResult = {
+        bias: 'bullish',
+        confidence: 78,
+        reasons: [
+          'Liquidity sweep detected above previous high',
+          '1H fair value gap filled with strong reaction',
+          'Higher-low structure forming at key support level',
+          'Bullish order flow indicates buyer strength'
+        ],
+        best_move: 'Wait for retracement to 1H FVG zone before entering long. Target previous high with stop below structure.'
       };
 
-      reader.onerror = () => {
-        throw new Error('Failed to read image');
-      };
+      setResult(mockResult);
+      toast.success('Analysis complete!');
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to analyze chart');
@@ -105,7 +90,7 @@ const Index = () => {
               onClick={handleAnalyze}
               disabled={isAnalyzing}
               size="lg"
-              className="glass-card px-8 py-6 text-lg font-semibold hover:shadow-glow"
+              className="glass-card px-8 py-6 text-lg font-semibold hover:shadow-glow text-foreground"
             >
               {isAnalyzing ? (
                 <>
