@@ -102,7 +102,7 @@ const History = () => {
                     <div>
                       <h3 className="font-semibold capitalize">{analysis.bias}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {Math.round(analysis.confidence * 100)}% confidence
+                        {analysis.confidence.toFixed(2)}% confidence
                       </p>
                     </div>
                   </div>
