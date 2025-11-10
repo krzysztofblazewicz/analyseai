@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UploadZone } from '@/components/UploadZone';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { Loader2 } from 'lucide-react';
+import { Loader2, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface AnalysisResult {
   bias: 'bullish' | 'bearish' | 'ranging';
@@ -17,6 +18,7 @@ const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const navigate = useNavigate();
 
   const handleImageSelect = (file: File) => {
     setSelectedImage(file);
@@ -118,6 +120,16 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center mb-12 fade-in">
+          <div className="flex justify-end mb-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/history')}
+              className="gap-2"
+            >
+              <History className="h-4 w-4" />
+              View History
+            </Button>
+          </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             AI Market Vision
           </h1>
