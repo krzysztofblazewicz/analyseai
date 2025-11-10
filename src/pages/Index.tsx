@@ -4,6 +4,7 @@ import { UploadZone } from '@/components/UploadZone';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AnalysisResult {
   bias: 'bullish' | 'bearish' | 'ranging';
@@ -65,6 +66,34 @@ const Index = () => {
 
             const data = await response.json();
             setResult(data);
+            
+            // Save image to storage and analysis to database
+            try {
+              const fileExt = selectedImage.name.split('.').pop();
+              const fileName = `${Date.now()}.${fileExt}`;
+              
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('chart-images')
+                .upload(fileName, selectedImage);
+
+              if (uploadError) throw uploadError;
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('chart-images')
+                .getPublicUrl(fileName);
+
+              await supabase.from('chart_analyses').insert({
+                image_url: publicUrl,
+                bias: data.bias,
+                confidence: data.confidence,
+                reasons: data.reasons,
+                best_move: data.best_move,
+              });
+            } catch (saveError) {
+              console.error('Error saving analysis:', saveError);
+              // Don't show error to user, analysis still succeeded
+            }
+            
             toast.success('Analysis complete!');
             resolve();
           } catch (error) {

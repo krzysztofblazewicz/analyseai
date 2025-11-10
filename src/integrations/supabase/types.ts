@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chart_analyses: {
+        Row: {
+          best_move: string
+          bias: string
+          confidence: number
+          created_at: string | null
+          id: string
+          image_url: string
+          reasons: Json
+        }
+        Insert: {
+          best_move: string
+          bias: string
+          confidence: number
+          created_at?: string | null
+          id?: string
+          image_url: string
+          reasons: Json
+        }
+        Update: {
+          best_move?: string
+          bias?: string
+          confidence?: number
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          reasons?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
