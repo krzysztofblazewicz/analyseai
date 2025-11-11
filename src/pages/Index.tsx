@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { UploadZone } from '@/components/UploadZone';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { Loader2, History } from 'lucide-react';
+import { Loader2, History, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AnalysisResult {
   bias: 'bullish' | 'bearish' | 'ranging';
@@ -18,7 +19,29 @@ const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleImageSelect = (file: File) => {
     setSelectedImage(file);
@@ -90,6 +113,7 @@ const Index = () => {
                 confidence: data.confidence,
                 reasons: data.reasons,
                 best_move: data.best_move,
+                user_id: user?.id,
               });
             } catch (saveError) {
               console.error('Error saving analysis:', saveError);
@@ -115,12 +139,21 @@ const Index = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center mb-12 fade-in">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
             <Button
               variant="outline"
               onClick={() => navigate('/history')}
@@ -128,6 +161,14 @@ const Index = () => {
             >
               <History className="h-4 w-4" />
               View History
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
             </Button>
           </div>
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">

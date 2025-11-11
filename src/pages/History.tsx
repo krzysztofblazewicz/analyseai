@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface ChartAnalysis {
   id: string;
@@ -18,11 +19,31 @@ interface ChartAnalysis {
 const History = () => {
   const [analyses, setAnalyses] = useState<ChartAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAnalyses();
-  }, []);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate('/auth');
+      } else {
+        fetchAnalyses();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const fetchAnalyses = async () => {
     try {
@@ -62,19 +83,38 @@ const History = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center mb-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-4xl font-bold">Analysis History</h1>
+          </div>
           <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="mr-4"
+            variant="outline"
+            onClick={handleLogout}
+            className="gap-2"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
+            <LogOut className="h-4 w-4" />
+            Logout
           </Button>
-          <h1 className="text-4xl font-bold">Analysis History</h1>
         </div>
 
         {loading ? (

@@ -23,6 +23,7 @@ export type Database = {
           id: string
           image_url: string
           reasons: Json
+          user_id: string | null
         }
         Insert: {
           best_move: string
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           image_url: string
           reasons: Json
+          user_id?: string | null
         }
         Update: {
           best_move?: string
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           image_url?: string
           reasons?: Json
+          user_id?: string | null
         }
         Relationships: []
       }
