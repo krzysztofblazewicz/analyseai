@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut, Trash2 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut, Trash2, Filter } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import type { User, Session } from '@supabase/supabase-js';
 import {
@@ -33,6 +40,7 @@ const History = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [biasFilter, setBiasFilter] = useState<string>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -133,10 +141,14 @@ const History = () => {
     return null;
   }
 
+  const filteredAnalyses = biasFilter === 'all' 
+    ? analyses 
+    : analyses.filter(a => a.bias.toLowerCase() === biasFilter);
+
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -158,17 +170,36 @@ const History = () => {
           </Button>
         </div>
 
+        <div className="mb-6 flex items-center gap-3">
+          <Filter className="h-5 w-5 text-muted-foreground" />
+          <Select value={biasFilter} onValueChange={setBiasFilter}>
+            <SelectTrigger className="w-[180px] bg-background">
+              <SelectValue placeholder="Filter by bias" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All Analyses</SelectItem>
+              <SelectItem value="bullish">Bullish</SelectItem>
+              <SelectItem value="bearish">Bearish</SelectItem>
+              <SelectItem value="neutral">Neutral</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {loading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading analyses...</p>
           </div>
-        ) : analyses.length === 0 ? (
+        ) : filteredAnalyses.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No analyses yet. Upload a chart to get started!</p>
+            <p className="text-muted-foreground">
+              {analyses.length === 0 
+                ? "No analyses yet. Upload a chart to get started!" 
+                : `No ${biasFilter} analyses found. Try a different filter.`}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {analyses.map((analysis) => (
+            {filteredAnalyses.map((analysis) => (
               <Card key={analysis.id} className="glass-card overflow-hidden">
                 <img
                   src={analysis.image_url}
