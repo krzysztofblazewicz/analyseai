@@ -24,8 +24,9 @@ Every upload is logged securely and can be managed through a clean and intuitive
 - **Frontend:** React + Vite + TypeScript  
 - **Styling:** TailwindCSS  
 - **Backend / Auth / Storage:** Supabase  
-- **Deployment:** Vercel  
+- **Deployment:** Vercel, Lovable  
 - **Extras:** PDF generation, image storage, responsive UI
+  
 
 ---
 
