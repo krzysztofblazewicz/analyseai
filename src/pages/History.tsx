@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut, Trash2, Filter } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut, Trash2, Filter, FileText, Image as ImageIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,8 +21,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { exportAsPDF, exportAsImage } from '@/lib/exportUtils';
 
 interface ChartAnalysis {
   id: string;
@@ -45,13 +47,11 @@ const History = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
     });
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -137,6 +137,40 @@ const History = () => {
     }
   };
 
+  const handleExportPDF = async (analysis: ChartAnalysis) => {
+    try {
+      await exportAsPDF(analysis);
+      toast({
+        title: "Success",
+        description: "PDF exported successfully",
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportImage = async (analysis: ChartAnalysis) => {
+    try {
+      await exportAsImage(analysis);
+      toast({
+        title: "Success",
+        description: "Image exported successfully",
+      });
+    } catch (error) {
+      console.error('Error exporting image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export image",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!user) {
     return null;
   }
@@ -200,7 +234,7 @@ const History = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAnalyses.map((analysis) => (
-              <Card key={analysis.id} className="glass-card overflow-hidden">
+              <Card key={analysis.id} className="glass-card overflow-hidden relative">
                 <img
                   src={analysis.image_url}
                   alt="Chart"
@@ -233,35 +267,58 @@ const History = () => {
                       {new Date(analysis.created_at).toLocaleDateString()} at{' '}
                       {new Date(analysis.created_at).toLocaleTimeString()}
                     </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteId(analysis.id)}
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
+                </div>
+
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="bg-background/80 backdrop-blur-sm"
+                    onClick={() => handleExportPDF(analysis)}
+                    title="Export as PDF"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="bg-background/80 backdrop-blur-sm"
+                    onClick={() => handleExportImage(analysis)}
+                    title="Export as Image"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  
+                  <AlertDialog open={deleteId === analysis.id} onOpenChange={(open) => !open && setDeleteId(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bg-background/80 backdrop-blur-sm"
+                        onClick={() => setDeleteId(analysis.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Analysis</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this analysis? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </Card>
             ))}
           </div>
         )}
-
-        <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Analysis</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this analysis? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </div>
   );
