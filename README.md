@@ -37,7 +37,7 @@ Every upload is logged securely and can be managed through a clean and intuitive
 
 
 ## 🙌 Why I Built It  
-To combine trading, AI, and full-stack development into a real, functional project that demonstrates automation, backend integration, and modern UI design — perfect for my developer portfolio and placement applications.
+To combine trading, AI, and full-stack development into a real, functional project that demonstrates automation, backend integration, and modern UI design, perfect for my developer portfolio and placement applications.
 
 
 ## 📬 Contact  
